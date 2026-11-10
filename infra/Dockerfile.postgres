@@ -1,0 +1,8 @@
+# Usa a versão mais recente estável da imagem oficial do PostgreSQL
+FROM postgres:18
+
+# Define a variável de ambiente do diretório de dados (padrão para a versão 18)
+ENV PGDATA=/var/lib/postgresql/18/docker
+
+# Expõe a porta padrão
+EXPOSE 5432

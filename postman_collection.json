@@ -1,0 +1,247 @@
+{
+  "info": {
+    "name": "E-Commerce API",
+    "description": "Coleção de chamadas para as rotas da API. Configure baseUrl e usuarioId nas variáveis da coleção antes de usar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "usuarioId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "produtoId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "healthRoutes",
+      "item": [
+        {
+          "name": "Verificar liveness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "live"]
+            }
+          }
+        },
+        {
+          "name": "Verificar readiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "ready"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "produtoRoutes",
+      "item": [
+        {
+          "name": "Criar produto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Produto de exemplo\",\n  \"description\": \"Descrição do produto\",\n  \"price\": 49.9,\n  \"stock\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos"]
+            }
+          }
+        },
+        {
+          "name": "Listar produtos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos"]
+            }
+          }
+        },
+        {
+          "name": "Buscar produto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos", "{{produtoId}}"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar produto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Produto atualizado\",\n  \"description\": \"Descrição atualizada\",\n  \"price\": 59.9,\n  \"stock\": 8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos", "{{produtoId}}"]
+            }
+          }
+        },
+        {
+          "name": "Remover produto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/produtos/{{produtoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "produtos", "{{produtoId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "carrinhoRoutes",
+      "item": [
+        {
+          "name": "Consultar carrinho",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-usuario-id",
+                "value": "{{usuarioId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrinho",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "carrinho"]
+            }
+          }
+        },
+        {
+          "name": "Limpar carrinho",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-usuario-id",
+                "value": "{{usuarioId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrinho",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "carrinho"]
+            }
+          }
+        },
+        {
+          "name": "Adicionar item ao carrinho",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-usuario-id",
+                "value": "{{usuarioId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produto_id\": {{produtoId}},\n  \"quantidade\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/carrinho/itens",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "carrinho", "itens"]
+            }
+          }
+        },
+        {
+          "name": "Remover item do carrinho",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "x-usuario-id",
+                "value": "{{usuarioId}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produto_id\": {{produtoId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/carrinho/itens",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "carrinho", "itens"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

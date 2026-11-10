@@ -1,0 +1,8 @@
+# Usa a versão mais recente estável da imagem oficial do Redis
+FROM redis:8
+
+# Expõe a porta padrão
+EXPOSE 6379
+
+# Comando de inicialização padrão (herdado da imagem oficial, geralmente já é este)
+CMD ["redis-server"]
