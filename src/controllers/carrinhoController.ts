@@ -37,14 +37,25 @@ class CarrinhoController {
         }
     }
     async removeritem(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
         const body = req.body as RemoverItemBody;
         if (typeof body.produto_id !== 'number') {
             throw new HttpError(400, 'produto_id é obrigatório');
         }
 
-
         res.json(await carrinhoService.removerItem(this.get_UsarioIdFromRequest(req), body.produto_id))
+                } catch (error) {
+            next(error);
+        }
     }
+    async fecharCarrinho(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const carrinho = await carrinhoService.fecharCarrinho(this.get_UsarioIdFromRequest(req));
+            res.status(201).json(carrinho);
+        } catch (error) {
+            next(error);
+        }
+    }   
 
     get_UsarioIdFromRequest(req: Request): number {
         const usuarioId = Number(req.get("x-usuario-id"));

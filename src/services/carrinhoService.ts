@@ -1,12 +1,13 @@
-import { Router, type RequestHandler } from 'express';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { HttpError } from '../utils/errors.js';
-import type { AdicionarItemBody, RemoverItemBody } from '../models/types.js';
+
 import carrinhoRepository from '../repositories/carrinhoRepository.js';
 
 class CarrinhoService {
     async montarCarrinho(id : number) {
-        const carrinho = await carrinhoRepository.montarCarrinho(id);
+        let carrinho = await carrinhoRepository.montarCarrinho(id);
+        if(carrinho.status === 'FECHADO'){
+            carrinho = await carrinhoRepository.mudarStatusCarrinho(id, 'FECHADO');
+            throw new Error("Carrinho fechado");
+        }
         return carrinho;
     }
     async limparCarrinho(id : number) {
@@ -18,6 +19,13 @@ class CarrinhoService {
     }
     async removerItem(usuarioId: number, produtoId: number) {
         const carrinho = await carrinhoRepository.removerItem(usuarioId, produtoId);
+        return carrinho;
+    }
+    async fecharCarrinho(usuarioId: number) {
+        const carrinho = await carrinhoRepository.mudarStatusCarrinho(usuarioId, 'FECHADO');
+        if (carrinho.itens.length === 0) {
+            throw new Error("Carrinho vazio");
+        }
         return carrinho;
     }
 }

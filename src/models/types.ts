@@ -15,7 +15,8 @@ export interface ProdutoRow {
 
 export interface CarrinhoRow {
   id: number;
-  usuario_id: number;
+  status: string;
+  cliente_id: number;
 }
 
 export interface ItemCarrinhoRow {
@@ -24,6 +25,14 @@ export interface ItemCarrinhoRow {
   preco: number;      // centavos
   quantidade: number;
   subtotal: number;   // centavos
+}
+
+export interface PedidoRow {
+  id: number;
+  cliente_id: number;
+  status: string;
+  total: string;
+  updated_at: Date;
 }
 
 // ---- DTOs de API (camelCase, o que o cliente vê) ----
@@ -37,7 +46,8 @@ export interface ItemCarrinhoDTO {
 }
 
 export interface CarrinhoDTO {
-  usuarioId: number;
+  clienteId: number;
+  status: string;
   itens: ItemCarrinhoDTO[];
   total: number;      // em reais
 }

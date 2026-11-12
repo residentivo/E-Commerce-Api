@@ -5,16 +5,18 @@ import type {
     CarrinhoRow,
     ItemCarrinhoRow,
 } from '../models/types.js';
+import client from '../config/redisClient.js';
+import { PoolClient } from 'pg';
 
 class CarrinhoRepository {
     /** Retorna o carrinho do usuário, criando se não existir. */
-    async obterOuCriarCarrinho(usuarioId: number): Promise<CarrinhoRow> {
+    async obterOuCriarCarrinho(clienteId: number): Promise<CarrinhoRow> {
         const { rows } = await query<CarrinhoRow>(
-            `INSERT INTO carrinhos (usuario_id)
-     VALUES ($1)
-     ON CONFLICT (usuario_id) DO UPDATE SET usuario_id = EXCLUDED.usuario_id
-     RETURNING id, usuario_id`,
-            [usuarioId]
+            `INSERT INTO carrinhos (cliente_id, status)
+     VALUES ($1, 'ABERTO')
+     ON CONFLICT (cliente_id) DO UPDATE SET cliente_id = EXCLUDED.cliente_id
+     RETURNING id, cliente_id, status`,
+            [clienteId]
         );
         const row = rows[0];
         if (!row) throw new HttpError(500, 'Falha ao obter carrinho');
@@ -22,8 +24,8 @@ class CarrinhoRepository {
     }
 
     /** Monta a visão do carrinho com itens, subtotais e total. */
-    async montarCarrinho(usuarioId: number): Promise<CarrinhoDTO> {
-        const carrinho = await this.obterOuCriarCarrinho(usuarioId);
+    async montarCarrinho(clienteId: number): Promise<CarrinhoDTO> {
+        const carrinho = await this.obterOuCriarCarrinho(clienteId);
 
         const { rows } = await query<ItemCarrinhoRow>(
             `SELECT ci.produto_id,
@@ -41,7 +43,8 @@ class CarrinhoRepository {
         const totalCentavos = rows.reduce((acc, i) => acc + i.subtotal, 0);
 
         return {
-            usuarioId: usuarioId,
+            clienteId: clienteId,
+            status: carrinho.status,
             itens: rows.map((i) => ({
                 produtoId: i.produto_id,
                 nome: i.nome,
@@ -54,7 +57,7 @@ class CarrinhoRepository {
     }
 
     /** Adiciona quantidade de um produto ao carrinho. */
-    async adicionarItem(usuarioId: number, produtoId: number, quantidade: number): Promise<CarrinhoDTO> {
+    async adicionarItem(clienteId: number, produtoId: number, quantidade: number): Promise<CarrinhoDTO> {
         if (!Number.isInteger(quantidade) || quantidade <= 0) {
             throw new HttpError(400, 'Quantidade deve ser inteiro positivo');
         }
@@ -73,11 +76,11 @@ class CarrinhoRepository {
             }
 
             const carrRes = await client.query<{ id: number }>(
-                `INSERT INTO carrinhos (usuario_id)
+                `INSERT INTO carrinhos (cliente_id)
        VALUES ($1)
-       ON CONFLICT (usuario_id) DO UPDATE SET usuario_id = EXCLUDED.usuario_id
+       ON CONFLICT (cliente_id) DO UPDATE SET cliente_id = EXCLUDED.cliente_id
        RETURNING id`,
-                [usuarioId]
+                [clienteId]
             );
             const carrinhoId = carrRes.rows[0]?.id;
             if (!carrinhoId) throw new HttpError(500, 'Falha ao criar carrinho');
@@ -111,18 +114,18 @@ class CarrinhoRepository {
             client.release();
         }
 
-        return this.montarCarrinho(usuarioId);
+        return this.montarCarrinho(clienteId);
     }
 
     /** Remove um item (ou reduz quantidade, se informada). */
-    async removerItem(usuarioId: number, produtoId: number): Promise<CarrinhoDTO> {
+    async removerItem(clienteId: number, produtoId: number): Promise<CarrinhoDTO> {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
 
             const carrRes = await client.query<{ id: number }>(
-                'SELECT id FROM carrinhos WHERE usuario_id = $1',
-                [usuarioId]
+                'SELECT id FROM carrinhos WHERE cliente_id = $1',
+                [clienteId]
             );
             const carrinhoId = carrRes.rows[0]?.id;
             if (!carrinhoId) {
@@ -147,18 +150,37 @@ class CarrinhoRepository {
             client.release();
         }
 
-        return this.montarCarrinho(usuarioId);
+        return this.montarCarrinho(clienteId);
     }
 
     /** Esvazia o carrinho. */
-    async limparCarrinho(usuarioId: number): Promise<CarrinhoDTO> {
-        await query(
+    async limparCarrinho(clienteId: number, client?: PoolClient): Promise<CarrinhoDTO> {
+        const carrinhoClient = client || await pool.connect();
+
+        await carrinhoClient.query(
             `DELETE FROM carrinho_itens ci
-      USING carrinhos c
-      WHERE ci.carrinho_id = c.id AND c.usuario_id = $1`,
-            [usuarioId]
+          USING carrinhos c
+          WHERE ci.carrinho_id = c.id AND c.cliente_id = $1`,
+            [clienteId]
         );
-        return this.montarCarrinho(usuarioId);
+
+        return this.mudarStatusCarrinho(clienteId, 'ABERTO');
+    }
+
+    /** Muda o status do carrinho (ex: FECHADO). */
+    async mudarStatusCarrinho(clienteId: number, status: string): Promise<CarrinhoDTO> {
+        const carrRes = await pool.query<{ id: number }>(
+            'SELECT id FROM carrinhos WHERE cliente_id = $1',
+            [clienteId]
+        );
+        const carrinhoId = carrRes.rows[0]?.id;
+        if (!carrinhoId) {
+            throw new HttpError(400, 'Carrinho não encontrado');
+        }
+
+        await pool.query('UPDATE carrinhos SET status = $1 WHERE id = $2', [status, carrinhoId]);
+
+        return this.montarCarrinho(clienteId);
     }
 }
 

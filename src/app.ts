@@ -7,6 +7,7 @@ import redisClient from './config/redisClient';
 import healthRoutes from './routes/healthRoutes';
 import productRoutes from './routes/produtoRoutes';
 import carrinhoRoutes from './routes/carrinhoRoutes';
+import compraRoutes from './routes/compraRoutes';
 
 
 
@@ -37,6 +38,7 @@ app.use(limiter);
 app.use(morgan(process.env.ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 app.use('/health', healthRoutes);
+app.use('/api/compras', compraRoutes);
 app.use('/api/produtos', productRoutes);
 app.use('/api/carrinho', carrinhoRoutes);
 app.use(notFoundHandler);
